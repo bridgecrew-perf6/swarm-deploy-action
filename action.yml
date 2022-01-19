@@ -22,30 +22,30 @@
       steps:
         - uses: actions/checkout@v2
         - name: Deploy
-        env:
-          BRANCH: ${{ github.ref }}
-        run: |
-          PROJECT=${{ inputs.project }}
+          env:
+            BRANCH: ${{ github.ref }}
+          run: |
+            PROJECT=${{ inputs.project }}
 
-          case "${BRANCH}" in
-            "refs/heads/production")
-              COMPOSE_FILE=docker-compose-prod.yml
-              HOST=${{ inputs.prod-host }}
-              PORT=${{ inputs.prod-port }}
-              ;;
-            *)
-              COMPOSE_FILE=docker-compose-staging.yml
-              HOST=${{ inputs.staging-host }}
-              PORT=${{ inputs.staging-port }}
-              ;;
-          esac
+            case "${BRANCH}" in
+              "refs/heads/production")
+                COMPOSE_FILE=docker-compose-prod.yml
+                HOST=${{ inputs.prod-host }}
+                PORT=${{ inputs.prod-port }}
+                ;;
+              *)
+                COMPOSE_FILE=docker-compose-staging.yml
+                HOST=${{ inputs.staging-host }}
+                PORT=${{ inputs.staging-port }}
+                ;;
+            esac
 
-          BRANCH_NAME=${GITHUB_REF/refs\/heads\/}
-          NORMALIZED_BRANCH_NAME=${BRANCH_NAME//[^A-Za-z0-9-_]/_}
+            BRANCH_NAME=${GITHUB_REF/refs\/heads\/}
+            NORMALIZED_BRANCH_NAME=${BRANCH_NAME//[^A-Za-z0-9-_]/_}
 
-          eval `ssh-agent -s`
-          ssh-add - <<< "${{ secrets.SSH_KEY }}"
-          DOCKER_REPO_TMP=$(echo $DOCKER_REPO | sed "s/\//\\\\\//g")
-          sed -i "s/\$DOCKER_IMAGE/$DOCKER_REPO_TMP:prod-${NORMALIZED_BRANCH_NAME}-${GITHUB_RUN_NUMBER}/" ${COMPOSE_FILE}
-          scp -o StrictHostKeyChecking=no -P ${PORT} ${COMPOSE_FILE} ubuntu@${HOST}:/var/www/${PROJECT}/docker-compose.yml
-          ssh -o StrictHostKeyChecking=no -p ${PORT} ubuntu@${HOST} HOST=${HOST} "/var/www/pull-new-version.sh ${PROJECT}"
+            eval `ssh-agent -s`
+            ssh-add - <<< "${{ secrets.SSH_KEY }}"
+            DOCKER_REPO_TMP=$(echo $DOCKER_REPO | sed "s/\//\\\\\//g")
+            sed -i "s/\$DOCKER_IMAGE/$DOCKER_REPO_TMP:prod-${NORMALIZED_BRANCH_NAME}-${GITHUB_RUN_NUMBER}/" ${COMPOSE_FILE}
+            scp -o StrictHostKeyChecking=no -P ${PORT} ${COMPOSE_FILE} ubuntu@${HOST}:/var/www/${PROJECT}/docker-compose.yml
+            ssh -o StrictHostKeyChecking=no -p ${PORT} ubuntu@${HOST} HOST=${HOST} "/var/www/pull-new-version.sh ${PROJECT}"
