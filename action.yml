@@ -23,6 +23,7 @@
       steps:
         - uses: actions/checkout@v2
         - name: Deploy
+          shell: bash
           env:
             BRANCH: ${{ github.ref }}
           run: |
